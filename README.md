@@ -1,96 +1,89 @@
 # ARGUS
 
-**Aggregate Ranking for General University Standing**
+Aggregate Ranking of General University Standing.
 
-ARGUS is a personalized ranking of U.S. universities built around undergraduate career outcomes, prestige, student experience, and the learning environment. It is a general institutional ranking, not a CS/STEM, selectivity, or research ranking.
+ARGUS combines published institution-level inputs into its own Overall and specialty rankings. It is not a prediction of admission chances or an individual student's outcomes.
 
-The preferences are subjective; the school inputs are not manually assigned from impressions. Category choices and weights express those preferences, while scores come from published school-level data and deterministic transformations.
+## Publication status
 
-## Project status
+Website publication is being prepared. GitHub Pages is not yet enabled. The local website covers **237 institutions**, with **224 Overall-ranked** and **13 Overall NR** institutions, across **245 pages**. No public launch is claimed until rights and release checks pass.
 
-The ranking workbooks, data collection, and validation experiments currently exist outside this repository. This repository is the public project home; it does not yet include those files or a runnable application. The methodology below describes the current ranking, not a claim that its implementation is already published here.
+Raw publisher inputs, the four finalized website JSON files, master/condensed workbooks, research downloads and credentials remain local. This repository will contain reviewed website source and eligible assets. A separately reviewed static release may be published from `gh-pages`; it must not expose excluded inputs. Full data-dependent reproduction requires the private inputs and is not available from a public clone alone.
 
-## Methodology
+See the [website source instructions](site/README.md) for public checks and private build prerequisites. The [external WSJ research citation](THIRD_PARTY_NOTICES.md#external-source-reference) is a link only; no Scribd document is redistributed here.
 
-| Category | Overall weight | Components and weights within the category |
-| --- | ---: | --- |
-| Career Outcomes & Career Power | 35% | College Scorecard earnings 31.25%; PayScale bachelor's-only mid-career pay 25%; WSJ Salary Impact 25%; WSJ Preparation for Career 18.75% |
-| Prestige & Recognition | 20% | Historical U.S. News National Universities ranks 100% |
-| Student Experience & Environment | 35% | Princeton Review Quality of Life rating 56.25%; WSJ Recommendation Score 43.75% |
-| Learning Environment | 10% | WSJ Learning Opportunities 60%; WSJ Learning Facilities 40% |
+## Overall methodology
 
-```text
-ARGUS score = 0.35 × Career
-            + 0.20 × Prestige
-            + 0.35 × Experience
-            + 0.10 × Learning
-```
+| Category | Overall weight |
+| --- | ---: |
+| Career Outcomes | 35% |
+| Prestige | 20% |
+| Student Experience | 35% |
+| Learning Environment | 10% |
 
-### Career outcomes
+These are ARGUS preference weights. Publisher observations are not independently assigned subjective scores by ARGUS.
 
-Earnings measures are institution-level and consistent across schools within each source. PayScale uses bachelor's-only mid-career pay, not all-alumni pay, early-career pay, or return on investment.
+### Career Outcomes
 
-Both earnings measures use a fixed logarithmic transformation:
+Base component weights within Career are College Scorecard earnings 31.25%, PayScale bachelor's-only mid-career pay 25%, WSJ Salary Impact 25%, and WSJ Preparation for Career 18.75%.
 
-```text
-earnings score = clamp(50 + 40 × log2(earnings / benchmark), 0, 100)
-```
+Earnings use fixed benchmark-based logarithmic transformations, not target-list percentiles. Convert earnings and benchmarks to the documented common dollar year. Missing-input redistribution is allowed only within Career: both earnings inputs must exist, or one earnings input must exist together with both WSJ career scores. Rescale available components proportionally. Otherwise Career is unsupported.
 
-Earnings and benchmarks are converted to a common dollar year. The frozen benchmarks are $82,056 in 2025 dollars for Scorecard and $87,000 in 2024 dollars for PayScale. These benchmarks are not derived from the candidate list. Adding a school does not change another school's earnings score.
-
-Missing-component redistribution is allowed only within Career, with these minimum requirements:
-
-- If both WSJ career scores are available, at least one of Scorecard or PayScale must also be available.
-- Otherwise, both Scorecard and PayScale must be available.
-
-Available components retain their original relative weights, rescaled to total 100% within Career. Adjusted outcomes and data coverage are identified separately.
+The earnings curve is `clamp(50 + 40 * log2(earnings / benchmark), 0, 100)`. The frozen Scorecard benchmark is 82056; the PayScale benchmark is 87000 in 2024 dollars, or 89289.20363799814 in common 2025 dollars. Scorecard earnings are originally 2022 dollars. Preserve the finalized CPI conversion factors rather than updating them during a website build.
 
 ### Prestige
 
-Three U.S. News National Universities editions are combined: current edition 60%, previous edition 25%, and two editions ago 15%. Each rank is converted before averaging.
+Within Prestige, historical actual/estimated U.S. News standing contributes 40%, acceptance score 30%, and pooled IPEDS yield score 30%.
 
-The current, steeper prestige curve uses these anchors:
+History uses the 2027/2026/2025 edition window with intended weights of 60%/25%/15%. Use each observation's actual National/Regional category and redistribute over supported editions within that window, with at least one supported observation. Do not invent National ranks for Regional institutions. National standing uses the frozen National curve; eligible Regional University ranks 1–30 use the frozen experimental bridge. Its documented uncertainty is not a prediction interval.
 
-| U.S. News rank | Prestige score |
-| ---: | ---: |
-| 1 | 100 |
-| 5 | 96 |
-| 10 | 92 |
-| 20 | 84 |
-| 30 | 76 |
-| 40 | 70 |
-| 50 | 64 |
-| 75 | 52 |
-| 100 | 40 |
+National rank/score anchors are `1:100, 5:96, 10:92, 20:84, 30:76, 40:70, 50:64, 75:52, 100:40`, interpolated linearly. Above rank 100, use `max(0, 40 - 0.48 * (rank - 100))`. Regional estimates retain the frozen intercept 49.819083943184204 and log slope -15.621603224331466, range 1–30, and original experimental/rejection evidence; they are not actual National rankings.
 
-Scores are linearly interpolated between anchors. Beyond rank 100, the score falls by 0.48 points per rank and is floored at zero. This is an ARGUS preference curve, not a published U.S. News score.
+Acceptance score is `100 * (1 - sqrt(acceptance rate))`. Yield score is `100 * sqrt(sum(enrollees) / sum(admits))`.
 
-### Experience and learning
+Prefer each institution's latest available Common Data Set acceptance figure, including reviewed CDS-derived summaries where permitted by the evidence policy. When CDS acceptance is unavailable, the approved fallback is U.S. News undergraduate acceptance with its own provenance and edition/cohort when known. Do not relabel it CDS or infer a publisher edition. The Caltech, Duke and Pittsburgh fallback rates were supplied by the user and have **not been independently verified**; ordinary U.S. News website links do not upgrade that evidence state.
 
-Princeton Review uses its numerical **Quality of Life rating**, not a position on a ranked list. The remaining inputs use the specified published WSJ scores.
+Yield alone uses pooled campus-specific IPEDS 2022/2023/2024 counts. Pool counts rather than averaging percentages. No older-CDS field backfill or IPEDS substitution for active acceptance is allowed.
 
-No missing-input redistribution is allowed in Prestige, Experience, or Learning. A tested Niche-to-Princeton Review fallback was rejected and is not active.
+### Student Experience
 
-Institutional access, QS, THE, and PSEO do not contribute to the current ranking.
+First priority is an actual Princeton Review Quality of Life rating and WSJ Recommendation, weighted 56.25%/43.75%. If PR is missing, the approved Niche Campus grade can pair with WSJ Recommendation at those weights. If WSJ Recommendation is missing, actual PR can pair with Campus at those weights. Campus alone is insufficient. It is an observed proxy, not a predicted PR rating.
 
-## Eligibility and interpretation
+### Learning Environment
 
-The live ranking covers U.S. News **National Universities**. A school must have the required scope confirmation, all three prestige inputs, both experience inputs, both learning inputs, and sufficient career inputs under the rule above.
+A complete WSJ Learning Opportunities/Facilities pair contributes 60%/40%. If either is missing, substitute the whole approved Niche Academics/Professors pair at 60%/40%; do not mix WSJ and Niche components. Missing required proxies produce NR. Niche Professors is not a physical-facilities measure.
 
-Unavailable required data produces **NR (not ranked)**, not an estimated score, a zero, or an average. NR is a data or eligibility status, not a judgment of school quality. Coverage and missing reasons are reported separately.
+## Specialty rankings
 
-Schools are sorted by their unrounded scores. Schools within 0.50 points may share a competition rank, but every school in the tie group must be within 0.50 points of its highest-scoring member. Ties cannot chain together. Score bands are more meaningful than tiny position differences.
+- **STEM:** Engineering 30%, Computer Science 30%, Chemistry 10%, Mathematics 10%, Physics 10%, Biology 10%. Engineering and CS require primary or approved corresponding Niche fallback support. Renormalize available field weights, then deduct two points per science missing from both source routes, at most eight points; clamp at zero. Unresolved evidence is not confirmed absence.
+- **Business:** eligible owned full-time MBA unit and designated U.S. News MBA rank; no undergraduate-business or professional Niche fallback.
+- **Law:** eligible owned JD unit and designated U.S. News law rank; Princeton Review and LawHub do not score. LawHub outcomes are contextual only.
+- **Medical:** qualifying owned MD/DO programs use the designated Admit MD/DO source and frozen campus-mapping/aggregation rules. Do not transfer ranks from independent institutions.
 
-Individual scores use fixed transformations rather than candidate-relative scaling. Positions still depend on which schools are included.
+Specialties use the frozen specialty rank-to-score anchors, not the steeper Overall National-standing curve. Numerical rank bands use their midpoint. Legitimate zeroes count as observed data. No candidate-list min/max scaling, percentile conversion or z-score normalization is introduced.
 
-Acceptance rates, incoming SAT/GPA, research spending, endowment, rigor, sports, weather, and similar attributes are not separate ARGUS scoring inputs. Underlying publisher metrics may reflect their own criteria. Institutional earnings are not causal estimates of a university's contribution or promises of an individual student's salary.
+Specialty rank/score anchors are `1:100, 5:98, 10:96, 20:92, 30:88, 40:85, 50:82, 75:76, 100:70, 200:50, 300:35, 500:15, 1000:5, 2000:0`. Interpolate linearly between anchors and clamp at zero beyond rank 2000.
 
-## Validation experiments
+## Missing data, ties and scope
 
-Regional-to-National prestige conversion and public-data approximations of the U.S. News methodology are separate experiments. They have not been adopted into the live ranking. Strong correlation alone is insufficient: individual prediction errors and out-of-sample performance also matter.
+Scope includes supported National and Regional Universities, not Liberal Arts Colleges or Regional Colleges. Overall requires every category's support/eligibility gates. No redistribution across Overall categories is allowed.
 
-Regional institutions are not assigned fictional National ranks. Any future conversion must validate before changing scope or scoring.
+**NR is not zero** and does not assert poor quality. Retain the recorded missing/eligibility reason. Category ranks include every candidate with a supported category score, including Overall NR institutions. Coverage measures intended source availability, not a statistical confidence interval.
 
-## License and attribution
+Sort by unrounded scores. Each tie group spans at most **0.50 points from its highest-scoring member**, with competition ranks and no chained ties. Positions can change when membership changes; fixed input versions and parameters preserve numerical scores.
 
-Repository material is licensed under the [MIT License](LICENSE). Third-party rankings, ratings, and datasets retain their respective rights and terms. ARGUS is independent and is not affiliated with or endorsed by the data publishers.
+## Admissions display and website corrections
+
+SAT and high-school GPA have **zero scoring weight**. Missing website values display as Not Reported; preserve detailed original evidence states. Do not assume a GPA scale or weighting.
+
+Reported SAT composites take priority. Otherwise compatible Math and Reading/Writing statistics may be summed for display and labeled derived, not a reported composite statistic. A single available section remains explicitly labeled Math or R&W. Do not combine incompatible statistics.
+
+Website-only SAT/GPA corrections are recorded separately from the frozen export, currently including MIT's official CDS recheck. They do not modify scores or ranks. The exported methodology and website display rules must be distinguished rather than silently conflated.
+
+## Code, sources and rights
+
+Source editions are retained in the private evidence records and reviewed public citations. Publisher versions can differ by metric; this is not a real-time admissions feed. Source attribution is not a redistribution license. ARGUS-derived results also require publication review when based on third-party data.
+
+The existing MIT LICENSE applies to ARGUS-authored code and documentation, not third-party photographs or publisher data. See [third-party notices](THIRD_PARTY_NOTICES.md) and the [publication process](docs/PUBLICATION.md). Photo licenses and required credits remain attached to each approved image; share-alike conditions apply to relevant photo adaptations.
+
+No publisher or university endorsement is implied. Do not publish unresolved material merely to meet a target date.
