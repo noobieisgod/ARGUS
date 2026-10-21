@@ -9,7 +9,7 @@ export async function checkRelease(directory,expectedManifestHash){
   const hash=buffer=>createHash('sha256').update(buffer).digest('hex');
   if(expectedManifestHash)assert.equal(hash(bytes),expectedManifestHash,'Unapproved release manifest');
   const manifest=JSON.parse(bytes);
-  assert.equal(manifest.basePath,'/ARGUS/');assert.equal(manifest.pages,245);assert.equal(manifest.photos,237);
+  assert.equal(manifest.basePath,'/argus-university-rankings/');assert.equal(manifest.pages,245);assert.equal(manifest.photos,237);
   assert.equal(Object.keys(manifest.files).filter(f=>f.endsWith('/index.html')||f==='index.html').length,245);
   assert.equal(Object.keys(manifest.files).filter(f=>/^assets\/[^/]+\.jpg$/.test(f)).length,237);
   const all=[];
@@ -41,8 +41,8 @@ export async function checkRelease(directory,expectedManifestHash){
   let links=0;
   for(const html of pages.values())for(const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)){
     const value=match[1].replaceAll('&amp;','&');if(!value.startsWith('/'))continue;
-    assert.ok(value.startsWith('/ARGUS/'),'Unprefixed internal link');
-    const url=new URL(value,'https://example.invalid'),local=decodeURIComponent(url.pathname.slice('/ARGUS/'.length));links++;
+    assert.ok(value.startsWith('/argus-university-rankings/'),'Unprefixed internal link');
+    const url=new URL(value,'https://example.invalid'),local=decodeURIComponent(url.pathname.slice('/argus-university-rankings/'.length));links++;
     if(local.startsWith('assets/'))assert.ok(manifest.files[local],'Missing linked asset');
     else {const page=pages.get(local||'/');assert.ok(page,'Missing route: '+local);if(url.hash)assert.ok(page.includes(`id="${url.hash.slice(1)}"`),'Missing fragment');}
   }

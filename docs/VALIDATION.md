@@ -8,7 +8,7 @@ The finalized private dataset contains 237 institutions. The generated website c
 
 Before release, local checks compare the unchanged four exported JSON files with the saved master workbook, validate exact ranks, scores, ties and NR membership, and test deterministic output. The master is read without saving or recalculating it.
 
-Project-path checks verify the same site beneath `/ARGUS/`, including all internal links and local photographs. Browser checks cover sorting, combined filters, keyboard selection, comparison, responsive layout and representative image crops. Local checks do not establish that a public deployment works.
+Project-path checks verify the same site beneath `/argus-university-rankings/`, including all internal links and local photographs. Browser checks cover sorting, combined filters, keyboard selection, comparison, responsive layout and representative image crops. Local checks do not establish that a public deployment works.
 
 ## Public checks
 
