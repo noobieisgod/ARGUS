@@ -1,0 +1,54 @@
+name: Deploy approved ARGUS release
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Approved full gh-pages commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: argus-pages
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Require exact approved commit
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const a=JSON.parse(fs.readFileSync("source/publication/approved-release.json")); assert.match(process.env.RELEASE_SHA,/^[a-f0-9]{40}$/); assert.equal(a.commit,process.env.RELEASE_SHA); assert.equal(a.gatesPassed,true); assert.match(a.manifestSha256,/^[a-f0-9]{64}$/);'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release_sha }}
+          path: release
+          persist-credentials: false
+      - name: Verify commit and artifact integrity
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          test "$(git -C release rev-parse HEAD)" = "$RELEASE_SHA"
+          HASH=$(node -p 'JSON.parse(require("fs").readFileSync("source/publication/approved-release.json")).manifestSha256')
+          node source/site/tools/check-release.mjs release "$HASH"
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: release
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        id: deployment
