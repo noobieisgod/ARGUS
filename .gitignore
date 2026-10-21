@@ -167,7 +167,6 @@ venv.bak/
 .ropeproject
 
 # mkdocs/Zensical documentation
-/site
 
 # mypy
 .mypy_cache/
@@ -218,3 +217,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ARGUS private inputs and local working material
+/site/data/
+/site/handoff.json
+/site/admissions-updates.json
+/site/photo-research/
+/site/location-research/
+/site/dist/
+/work/
+/outputs/
+/research/
+node_modules/
+.env*
+*.xlsx
+*.xls
+*.pdf
+*.zip
