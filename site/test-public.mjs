@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {basePath,publicationHtml,unmount} from './paths.mjs';
+import {compareCards,sortKey} from './assets/sort.mjs';
+import {filterByLocation} from './assets/location-filter.mjs';
+import {addSchool,matchingSchools} from './assets/compare.mjs';
+
+const root=path.dirname(fileURLToPath(import.meta.url));
+async function walk(dir){const files=[];for(const e of await fs.readdir(dir,{withFileTypes:true})){
+  if(e.name==='.git')continue;
+  const name=path.join(dir,e.name);assert.ok(!e.isSymbolicLink(),'Unexpected symlink');
+  if(e.isDirectory())files.push(...await walk(name));else files.push(name);
+}return files;}
+for(const file of await walk(root))if(file.endsWith('.mjs'))execFileSync(process.execPath,['--check',file],{stdio:'pipe'});
+assert.equal(basePath('/ARGUS/'),'/ARGUS');
+for(const invalid of ['ARGUS','//ARGUS','/../ARGUS','/ARGUS?x','/ARGUS\\x'])assert.throws(()=>basePath(invalid));
+assert.equal(unmount('/ARGUS/schools/example/','/ARGUS'),'/schools/example/');
+assert.equal(unmount('/ARGUS-other/','/ARGUS'),null);
+assert.equal(publicationHtml('<a href="/compare/">Compare</a>','/ARGUS'),'<a href="/ARGUS/compare/">Compare</a>');
+assert.throws(()=>publicationHtml('<pre> x\n y</pre>','',true));
+const cards=[{dataset:{schoolId:'a',city:'Example',state:'CA',score:'42'}},{dataset:{schoolId:'b',city:'Elsewhere',state:'NY',score:''}}];
+assert.equal(compareCards(cards[0],cards[1],'score'),-1);
+assert.equal(sortKey('unexpected'),'score');
+assert.equal(filterByLocation(cards,{city:'Example',state:'CA'}),1);
+assert.equal(filterByLocation(cards,{city:'Example',state:'CA'},'b'),0);
+assert.deepEqual(addSchool(['a','b','c'],'d'),['a','b','c']);
+assert.deepEqual(addSchool(['a'],'a'),['a']);
+assert.equal(matchingSchools([{dataset:{search:'Example University California'}}],'example california').length,1);
+if(process.argv.includes('--repository')){
+  const repository=path.dirname(root);
+  const files=execFileSync('git',['ls-files'],{cwd:repository,encoding:'utf8'}).trim().split('\n');
+  for(const file of files)assert.ok(!/(^|\/)(?:work|data|research|photo-research|outputs|dist|node_modules)(\/|$)|\.(?:xlsx?|html?|pdf|zip|csv|tsv|pem|key)$|(^|\/)(?:schools|methodology|sources|history|handoff|admissions-updates)\.json$|(^|\/)\.env(?:\.|$)/i.test(file),'Excluded repository file: '+file);
+}
+console.log('PASS: public source syntax, synthetic interaction fixtures and project-path helpers. Private ranking inputs are not required.');
