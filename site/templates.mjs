@@ -1,0 +1,170 @@
+export const rankings=[
+  {key:'gus',name:'Overall',short:'Overall',directoryTitle:'Overall Rankings',pageTitle:'Overall Ranking',description:'Career outcomes, prestige, student experience, and learning environment.',detail:"The overall ranking is determined by an institution's prestige, student outcomes, student experience, and learning environment. All data is derived from existing rankings or data, ARGUS does not collect new data. You may learn more about our methodology"},
+  {key:'stem',name:'STEM',short:'STEM',directoryTitle:'STEM Rankings',pageTitle:'STEM Ranking',description:'General institution strength in engineering, computing, and fundamental sciences.',detail:"The STEM ranking measures an institution's overall strength in engineering, computing, and fundamental sciences. You may read more about our methodology"},
+  {key:'business',name:'Business',short:'Business',directoryTitle:'Business School Rankings',pageTitle:'Business School Ranking',description:'Business-school standing based on MBA programs.',detail:"The business ranking measures an institution's MBA program strength. You may read more about our methodology"},
+  {key:'law',name:'Law',short:'Law',directoryTitle:'Law School Rankings',pageTitle:'Law Schools Ranking',description:'Law-school standing based on JD programs.',detail:"The law schools ranking measures an institution's JD program strength. You may read more about our methodology"},
+  {key:'medical',name:'Medical',short:'Medical',directoryTitle:'Medical School Rankings',pageTitle:'Medical School Ranking',description:'Medical-school standing across both MD and DO programs.',detail:"The medical school ranking measures an institution's MD/DO program strength. You may read more about our methodology"}
+];
+export const categoryNames={career:'Career',prestige:'Prestige',experience:'Student Experience',learning:'Learning'};
+export const categoryTitles={prestige:'Prestige',career:'Outcomes',experience:'Student Experience',learning:'Learning Environment'};
+export const categoryUrl=key=>`/rankings/gus/?sort=${key}Score`;
+export const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export const numeric=v=>typeof v==='number'&&Number.isFinite(v);
+export const score=v=>numeric(v)?v.toFixed(2):'NR';
+export const percent=v=>numeric(v)?`${(100*v).toFixed(2)}%`:'Not Reported';
+export const result=(school,key)=>key==='gus'?school.overall:school.specialties[key];
+export const ranked=r=>r?.status==='ranked'&&numeric(r.rank)&&numeric(r.score);
+export const rankLabel=r=>ranked(r)?`#${r.rank}`:'NR';
+export const tie=r=>r.tieSize>1?' <span class="tie">(tie)</span>':'';
+export const schoolUrl=(s,images)=>`/schools/${images[s.id]?.slug??s.id}/`;
+const arrow='<span aria-hidden="true">↗</span>';
+export const userAcceptanceUrls={
+  'ipeds-110404':'https://www.usnews.com/best-colleges/california-institute-of-technology-1131',
+  'ipeds-198419':'https://www.usnews.com/best-colleges/duke-university-2920',
+  'ipeds-215293':'https://www.usnews.com/best-colleges/university-of-pittsburgh-3379'
+};
+
+export function photoCredit(asset,full=false){
+  if(!asset)return '';
+  const source=`<a href="${escape(asset.source)}" target="_blank" rel="noopener noreferrer">${escape(full&&asset.title?asset.title:asset.credit)} ↗</a>`;
+  if(!asset.photographer)return source;
+  const author=asset.photographerUrl?`<a href="${escape(asset.photographerUrl)}" target="_blank" rel="noopener noreferrer">${escape(asset.photographer)}</a>`:escape(asset.photographer);
+  return `${source} · ${author}${asset.copyrightNotice?` · ${escape(asset.copyrightNotice)}`:''} · <a href="${escape(asset.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escape(asset.license)}</a>`;
+}
+
+export function image(s,images,hero=false){
+  const asset=images[s.id];
+  return asset?`<img src="/assets/${escape(s.id)}.jpg" alt="${escape(asset.alt)}" style="object-position:${escape(asset.focalPosition)}" ${hero?'fetchpriority="high"':'loading="lazy"'} decoding="async">`:`<div class="photo-placeholder"><span>${escape(s.officialName)}<small>Campus photograph pending selection</small></span></div>`;
+}
+
+export function layout(title,body,stickyHeader=false){
+  return `<!doctype html><html lang="en"${stickyHeader?' class="sticky-header"':''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="ARGUS: transparent university rankings focused on outcomes, standing, student experience and learning."><title>${escape(title)} | ARGUS</title><link rel="stylesheet" href="/assets/styles.css"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><script type="module" src="/assets/site.mjs"></script></head><body>
+<a class="skip-link" href="#main">Skip to content</a><header class="site-header"><div class="header-inner"><div class="masthead"><a class="brand" href="/" aria-label="ARGUS home">ARGUS</a><p class="brand-subtitle">Aggregate Ranking of General University Standing</p><nav class="masthead-actions" aria-label="Quick links"><a href="/compare/">Compare schools</a><a href="/methodology/">How ARGUS works</a></nav></div><nav class="main-nav" aria-label="Main navigation"><a href="/">Home</a>${rankings.map(r=>`<a href="/rankings/${r.key}/">${r.name}</a>`).join('')}<a href="/methodology/">Methodology</a><details class="tools-menu"><summary>Others</summary><nav aria-label="Other tools"><a href="/compare/">School Comparison Tool</a><a href="https://github.com/noobieisgod/ARGUS">Sources</a><a href="https://github.com/noobieisgod/ARGUS/issues">Contact</a></nav></details></nav></div></header>
+<main id="main" tabindex="-1">${body}</main><footer><div class="container footer-inner"><div class="footer-brand"><a class="brand" href="/">ARGUS</a><p>Aggregate Ranking of General University Standing</p><p class="footer-note">Explore institutional standing through published rankings and source-backed admissions information.</p></div><nav class="footer-group" aria-label="Footer rankings"><h2>Explore rankings</h2>${rankings.map(r=>`<a href="/rankings/${r.key}/">${r.directoryTitle}</a>`).join('')}</nav><nav class="footer-group" aria-label="Footer resources"><h2>Resources</h2><a href="/compare/">School Comparison Tool</a><a href="/methodology/">How ARGUS works</a><a href="https://github.com/noobieisgod/ARGUS">Sources</a><a href="https://github.com/noobieisgod/ARGUS/issues">Contact</a><a href="/methodology/#photography">Photo credits</a></nav></div></footer></body></html>`;
+}
+
+export function satDisplay(sat){
+  const missing={value:'Not Reported',note:sat?.reason??'No reported SAT measure in the selected edition.'};
+  if(sat?.availabilityState!=='Reported')return missing;
+  if(numeric(sat.value))return {value:String(sat.value),note:sat.measure??'Reported SAT composite'};
+  const statistics=sat.statistics??{},composite=statistics.composite??{};
+  for(const metric of ['median','mean'])if(numeric(composite[metric]))return {value:String(composite[metric]),note:`SAT composite ${metric} (reported)`};
+  if(numeric(composite.p25)&&numeric(composite.p75))return {value:`${composite.p25}–${composite.p75}`,note:'SAT composite 25th–75th percentiles (reported)'};
+  const math=statistics.math,reading=statistics['evidence-based reading and writing']??statistics['evidence-based reading']??statistics['reading and writing'];
+  for(const metric of ['median','mean'])if(numeric(math?.[metric])&&numeric(reading?.[metric]))return {value:String(math[metric]+reading[metric]),note:`Sum of Math and R&W section ${metric}s (derived, not a reported composite ${metric})`};
+  if([math?.p25,math?.p75,reading?.p25,reading?.p75].every(numeric))return {value:`${math.p25+reading.p25}–${math.p75+reading.p75}`,note:'Sum of section 25th–75th percentiles (derived, not a reported composite range)'};
+  const sections=[['Math',math],['R&W',reading]].flatMap(([label,section])=>{
+    if(!section)return [];
+    for(const metric of ['median','mean'])if(numeric(section[metric]))return [{value:`${label}: ${section[metric]}`,note:`${label} section ${metric}`}];
+    return numeric(section.p25)&&numeric(section.p75)?[{value:`${label}: ${section.p25}–${section.p75}`,note:`${label} 25th–75th percentiles`}]:[];
+  });
+  return sections.length?{value:sections.map(s=>s.value).join('; '),note:sections.map(s=>s.note).join('; ')}:missing;
+}
+
+export function admissions(s){
+  const a=s.admissionsProfile;
+  const sat=a?.sat,gpa=a?.gpa,acceptance=a?.acceptance;
+  const satView=satDisplay(sat);
+  const gpaValue=gpa?.availabilityState==='Reported'&&numeric(gpa.value)?String(gpa.value):'Not Reported';
+  const gpaNote=gpaValue==='Not Reported'?gpa?.reason??'No GPA statistic reported.':`${gpa.measure??'Reported high-school GPA'}; weighting: ${gpa.weighting??'Not specified'}; scale: ${gpa.scale??'Not specified'}.`;
+  const fallback=acceptance?.sourceQuality==='usnews-undergraduate';
+  const acceptanceSource=acceptance?.userSupplied?'U.S. News undergraduate acceptance rate':acceptance?.sourceLabel;
+  const cohort=fallback?acceptance.cohort??'Publisher cohort unspecified':a?.admissionsCohort??'Cohort not specified';
+  return [
+    {key:'acceptance',label:'Acceptance rate',value:acceptance?.availabilityState==='Reported'?percent(acceptance.value):'Not Reported',note:`${fallback?acceptanceSource:'CDS '+(a?.cdsEdition??'Not Reported')} · ${cohort}`,cardNote:fallback?acceptanceSource:'CDS '+(a?.cdsEdition??'Not Reported'),sourceId:acceptance?.sourceId??a?.sourceId},
+    {key:'sat',label:'SAT',...satView,sourceId:sat?.sourceId??a?.sourceId},
+    {key:'gpa',label:'High-school GPA',value:gpaValue,note:gpaNote,sourceId:gpa?.sourceId??a?.sourceId}
+  ];
+}
+
+export function categoryRanks(s){
+  return `<dl class="category-ranks">${Object.entries(categoryNames).map(([key,name])=>`<div><dt>${name}</dt><dd data-category="${key}" data-rank="${s.overall.categories[key].rank??''}">${numeric(s.overall.categories[key].rank)?'#'+s.overall.categories[key].rank:'NR'}</dd></div>`).join('')}</dl>`;
+}
+
+export function schoolCard(s,key,images,categoryTies={}){
+  const r=result(s,key),definition=rankings.find(d=>d.key===key),a=admissions(s);
+  const categoryLabels=key==='gus'?Object.entries(categoryTitles).map(([category,label])=>{const c=s.overall.categories[category];return `<p class="rank-line" data-rank-view="${category}Score" hidden>${numeric(c.rank)?'#'+c.rank:'NR'} in ${label}${tie({tieSize:categoryTies[category]?.[c.rank]??1})}</p>`;}).join(''):'';
+  return `<article class="school-card${ranked(r)?'':' school-card-nr'}" data-school-id="${s.id}" data-ranking="${key}" data-rank="${r.rank??''}" data-score="${r.score??''}" data-school-name="${escape(s.name)}" data-city="${escape(s.location?.city??'')}" data-state="${escape(s.location?.state??'')}" ${Object.keys(categoryNames).map(category=>`data-${category}-score="${s.overall.categories[category].score??''}"`).join(' ')}><a class="card-link" href="${schoolUrl(s,images)}">
+<div class="card-photo">${image(s,images)}</div>
+<div class="card-content"><h2>${escape(s.officialName)}</h2><p class="school-location">${s.location?escape(`${s.location.city}, ${s.location.state}`):'Location not reported'}</p><p class="rank-line">${rankLabel(r)} in ${definition.name}${tie(r)}</p>${categoryLabels}<p class="secondary-rank"${key==='gus'?' hidden':''}>${rankLabel(s.overall)} in Overall${tie(s.overall)}</p>${!ranked(r)?`<p class="nr-reason">${escape(r.reason??'No supported ranking available.')}</p>`:''}${categoryRanks(s)}<span class="card-cta">Explore university ${arrow}</span></div>
+<div class="card-admissions">${a.map(f=>`<div><span>${f.label}</span><strong data-admission="${f.key}">${escape(f.value)}</strong><small>${escape(f.value==='Not Reported'?'Not reported in latest CDS':f.key==='acceptance'?f.cardNote:f.key==='gpa'&&/average|mean/i.test(s.admissionsProfile.gpa.measure??'')?'Average high-school GPA':f.note)}</small></div>`).join('')}<span class="admissions-more">Measures & sources on school page ${arrow}</span></div></a></article>`;
+}
+
+export function categoryLeader(schools,key){
+  return schools.filter(s=>numeric(s.overall.categories[key]?.rank)&&numeric(s.overall.categories[key]?.score)).sort((a,b)=>a.overall.categories[key].rank-b.overall.categories[key].rank||b.overall.categories[key].score-a.overall.categories[key].score||a.id.localeCompare(b.id))[0];
+}
+
+export function categoryCard(key,label,schools,allSchools,images,usedImages=new Set()){
+  const specialty=rankings.find(r=>r.key===key);
+  const candidates=specialty?allSchools.filter(s=>ranked(result(s,key))).sort((a,b)=>result(a,key).rank-result(b,key).rank||result(b,key).score-result(a,key).score||a.id.localeCompare(b.id)):[];
+  let leader=specialty?candidates[0]:categoryLeader(allSchools,key);
+  if(leader&&usedImages.has(leader.id))leader=specialty?candidates.find(s=>images[s.id]&&!usedImages.has(s.id)):categoryLeader(schools.filter(s=>images[s.id]&&!usedImages.has(s.id)),key);
+  const available=leader&&schools.some(s=>s.id===leader.id)&&images[leader.id];
+  if(available)usedImages.add(leader.id);
+  const descriptions={prestige:'Explore institutional reputation and selectivity.',career:'Explore graduate earnings and career outcomes.',experience:'Explore student life and the campus experience.',learning:'Explore teaching and the learning environment.'};
+  const url=specialty?`/rankings/${key}/`:categoryUrl(key);
+  return `<article class="category-card" data-category="${key}"><div class="category-card-copy"><span class="eyebrow">${specialty?'Specialty rankings':'Overall ranking perspectives'}</span><h2><a href="${url}">${specialty?.directoryTitle??`${label} Rankings`}</a></h2><p>${specialty?.description??descriptions[key]}</p><a class="category-card-link" href="${url}">Explore rankings →</a></div><div class="category-card-photo"${available?` data-school-id="${leader.id}"`:' aria-hidden="true"'}>${available?image(leader,images):''}</div></article>`;
+}
+
+export function homePage(schools,images,counts,allSchools){
+  const usedImages=new Set();
+  return layout('University rankings with perspective',`<div class="container home-content"><h1 class="visually-hidden">ARGUS University Rankings</h1>
+<section class="home-hero" aria-label="Explore university rankings"><a class="home-photo" href="/rankings/gus/" aria-label="Explore the 2027 Rankings"><figure>${image(schools[0],images,true)}<figcaption><strong>Explore the 2027 Rankings</strong><span>Overall Rankings →</span></figcaption></figure></a><aside class="ranking-directory" aria-label="University rankings">${rankings.map(r=>`<div class="directory-entry"><h2><a href="/rankings/${r.key}/">${r.directoryTitle}</a></h2><p>${r.description}</p></div>`).join('')}</aside></section>
+<section class="featured-schools"><h2>2027's Best Universities</h2><div class="school-teasers">${schools.slice(0,3).map(s=>`<article class="school-teaser" data-school-id="${s.id}" data-rank="${s.overall.rank??''}" data-score="${s.overall.score??''}"><a class="teaser-photo" href="${schoolUrl(s,images)}" aria-label="${escape(s.officialName)} profile">${image(s,images)}</a><div><h3><a href="${schoolUrl(s,images)}">${escape(s.officialName)}</a></h3><p class="teaser-rank">${rankLabel(s.overall)}${tie(s.overall)}</p><a class="teaser-link" href="${schoolUrl(s,images)}">View profile →</a></div></article>`).join('')}</div></section><section class="category-directory" aria-label="Category rankings">${[...Object.entries(categoryTitles),...rankings.slice(1).map(r=>[r.key,r.name])].map(([key,label])=>categoryCard(key,label,schools,allSchools,images,usedImages)).join('')}</section></div>`,true);
+}
+
+export function rankingPage(key,schools,images,counts){
+  const d=rankings.find(r=>r.key===key),sorted=[...schools].sort((a,b)=>{const x=result(a,key),y=result(b,key);return (ranked(y)-ranked(x))||((y.score??-1)-(x.score??-1))||a.id.localeCompare(b.id);});
+  const valid=sorted.filter(s=>ranked(result(s,key))),nr=sorted.filter(s=>!ranked(result(s,key)));
+  const categoryTies={};
+  if(key==='gus')for(const category of Object.keys(categoryTitles)){
+    const counts=categoryTies[category]={};
+    for(const s of schools){const rank=s.overall.categories[category].rank;if(numeric(rank))counts[rank]=(counts[rank]??0)+1;}
+  }
+  const description=d.detail;
+  const sort=key==='gus'?`<form id="ranking-sort" class="sort-controls"><fieldset><legend>Sort by</legend>${[['score','Overall'],...Object.entries(categoryTitles).map(([key,label])=>[key+'Score',label])].map(([value,label])=>`<label><input type="radio" name="sort" value="${value}"${value==='score'?' checked':''}>${label}</label>`).join('')}</fieldset><fieldset class="location-filter"><legend>Filter by location</legend><div class="search-picker"><label for="location-search" class="search-label">City or state</label><input id="location-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="location-options" placeholder="City or state" autocomplete="off"><div id="location-dropdown" class="search-dropdown" hidden><div id="location-options" role="listbox" aria-label="Location results"></div><p id="location-search-empty" hidden>No matching locations.</p></div></div><p id="location-status" class="quiet" role="status"></p><button id="location-clear" type="button" hidden>Clear location filter</button><noscript><p>Enable JavaScript to filter locations.</p></noscript></fieldset><fieldset class="location-filter"><legend>Filter by school</legend><div class="search-picker"><label for="ranking-school-search" class="search-label">School name</label><input id="ranking-school-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ranking-school-options" placeholder="Search schools" autocomplete="off"><div id="ranking-school-dropdown" class="search-dropdown" hidden><div id="ranking-school-options" role="listbox" aria-label="School filter results"></div><p id="ranking-school-search-empty" hidden>No matching schools.</p></div></div><p id="ranking-school-status" class="quiet" role="status"></p><button id="ranking-school-clear" type="button" hidden>Clear school filter</button></fieldset><span id="sort-status" class="visually-hidden" role="status"></span></form><script type="module" src="/assets/sort.mjs"></script>`:'';
+  return layout(d.pageTitle,`<section class="ranking-intro"><div class="container"><div class="breadcrumb"><a href="/">Home</a><span>/</span>Rankings</div><h1>${d.pageTitle}</h1><p>${escape(description)} <a href="/methodology/">here</a>.</p></div></section><div class="container rankings-body${key==='gus'?' with-sort':''}">${sort}<div class="ranking-results">${key==='gus'?'<p id="ranking-empty" class="quiet" hidden>No schools match both filters. Clear a filter to see more schools.</p>':''}<div class="school-list" id="ranked-schools">${valid.map(s=>schoolCard(s,key,images,categoryTies)).join('')}</div>${nr.length?`<section class="nr-section"><div class="list-heading"><h2>Not ranked in ${d.short}</h2><span>NR is not a score of zero</span></div><p class="quiet">The designated source or eligibility requirements are not satisfied. These schools are not assigned ${key==='gus'?'an Overall':'a specialty'} rank.</p>${nr.map(s=>schoolCard(s,key,images,categoryTies)).join('')}</section>`:''}</div></div>`);
+}
+
+function sourceLink(id,sources,url,label){
+  const s=sources.find(s=>s.id===id);
+  if(!s)return 'Source not recorded';
+  const text=escape(label??`${s.publisher}${s.edition?' · '+s.edition:''}`);
+  const href=url??s.url;
+  return href?`<a href="${escape(href)}" target="_blank" rel="noopener noreferrer">${text} ↗</a>`:text;
+}
+
+export function schoolPage(s,images,sources,method){
+  const a=admissions(s),profile=s.admissionsProfile;
+  const link=id=>id===profile.acceptance.sourceId&&profile.acceptance.userSupplied?sourceLink(id,sources,userAcceptanceUrls[s.id],'U.S. News'):sourceLink(id,sources);
+  const cards=rankings.filter(r=>ranked(result(s,r.key))).map(r=>{const value=result(s,r.key);return `<a class="detail-ranking" href="/rankings/${r.key}/" data-ranking="${r.key}" data-rank="${value.rank}" data-score="${value.score}"><span class="eyebrow">ARGUS ${r.short}</span><h3>#${value.rank} in ${r.name}${tie(value)}</h3><span class="detail-score">${score(value.score)}<small> / 100</small></span><p>Score Confidence: ${percent(value.coverage)}</p><span>View ranking ${arrow}</span></a>`;}).join('');
+  const used=new Set(a.map(f=>f.sourceId));
+  for(const r of rankings){const v=result(s,r.key);if(!ranked(v))continue;for(const component of Object.values(v.components??{}))if(component.sourceId)used.add(component.sourceId);}
+  const breakdown=Object.entries(categoryTitles).map(([key,label])=>{const c=s.overall.categories[key];return `<a class="detail-ranking" href="${categoryUrl(key)}" data-category="${key}" data-rank="${c.rank??''}" data-score="${c.score??''}"><span class="eyebrow">${method.categories.find(x=>x.key===key).weight*100}% of Overall</span><h3>${numeric(c.rank)?'#'+c.rank:'NR'} in ${label}</h3><span class="detail-score">${score(c.score)}<small> / 100</small></span><span>View ranking ${arrow}</span></a>`;}).join('');
+  const componentDetails=rankings.filter(r=>r.key!=='gus'&&ranked(result(s,r.key))).map(r=>`<details class="source-detail"><summary>${r.name}: publisher inputs and source labels</summary><div class="table-wrap"><table><caption>Publisher ranks are inputs, not ARGUS ranks.</caption><thead><tr><th>Component</th><th>Publisher rank</th><th>ARGUS component score</th><th>Selected source</th></tr></thead><tbody>${Object.entries(result(s,r.key).components).map(([key,c])=>`<tr><th>${escape(method.specialties[r.key].components.find(x=>x.key===key)?.name??key)}</th><td>${numeric(c.publishedRank)?'#'+c.publishedRank:numeric(c.effectiveRank)?'Effective rank '+c.effectiveRank:'Not Reported'}</td><td>${score(c.score)}</td><td>${escape(c.sourceLabel)}${c.isFallback?' · fallback':''}<br>${sourceLink(c.sourceId,sources)}</td></tr>`).join('')}</tbody></table></div></details>`).join('');
+  return layout(s.officialName,`<div class="container school-heading"><div class="breadcrumb"><a href="/">Home</a><span>/</span><a href="/rankings/gus/">Universities</a><span>/</span>${escape(s.name)}</div><h1>${escape(s.officialName)}</h1><p>${rankLabel(s.overall)} in Overall${tie(s.overall)}</p>${!ranked(s.overall)?`<p class="quiet">${escape(s.overall.reason??"Overall eligibility requirements are not satisfied.")}</p>`:""}</div><nav class="school-nav" aria-label="School sections"><div class="container"><a href="#overview">Overview</a><a href="#rankings">Rankings</a><a href="#admissions">Admissions</a><a href="#sources">Sources</a></div></nav>
+<section id="overview" class="container school-overview" aria-label="Campus photograph"><figure class="school-hero">${image(s,images,true)}<figcaption>${images[s.id]?`Campus photography · ${photoCredit(images[s.id])}`:"Campus photograph pending verified licensing and manual selection."}</figcaption></figure></section>
+<section id="rankings" class="container detail-section"><div class="section-heading"><h2>Rankings</h2></div><div class="detail-ranking-grid">${cards}${breakdown}</div><p class="quiet">Score Confidence is source coverage, not a statistical confidence interval. Only currently ranked specialties are shown. NR specialties are omitted, not scored as zero.</p><p class="quiet">Category ranks include all institutions with a supported category score, even when their Overall result is NR.</p>${componentDetails}</section>
+<section id="admissions" class="container detail-section"><div class="section-heading"><h2>Admissions Statistics</h2></div><div class="admissions-grid">${a.map(f=>`<article><span class="eyebrow">${f.label}</span><strong data-admission="${f.key}">${escape(f.value)}</strong><p>${escape(f.note)}</p>${f.key!=='acceptance'?`<p class="quiet">${escape(profile[f.key].population??'Population not separately specified')} · CDS ${escape(profile.cdsEdition??'Not Reported')}</p>`:`<p class="quiet">${numeric(profile.acceptance.applicants)&&numeric(profile.acceptance.admitted)?`${profile.acceptance.admitted.toLocaleString('en-US')} admitted / ${profile.acceptance.applicants.toLocaleString('en-US')} applicants`:'Applicant/admit counts not supplied for this source.'}</p>`}<p class="source-line">${link(f.sourceId)}</p></article>`).join('')}</div><p class="quiet">SAT and GPA are non-scoring metadata. Missing values display as Not Reported; unresolved evidence is not proof that an institution never publishes the measure. GPA weighting and scale are not assumed.</p></section>
+<section id="sources" class="container detail-section"><h2>Sources</h2><ul class="source-list">${[...used].filter(Boolean).map(id=>`<li>${link(id)}</li>`).join('')}${s.location?`<li>Campus location: <a href="${escape(s.location.source)}" target="_blank" rel="noopener noreferrer">${escape(s.location.sourceLabel??'Official university contact page')} ↗</a></li>`:''}</ul><a class="text-link" href="/methodology/">Full methodology and source conventions ${arrow}</a></section>`);
+}
+
+export function comparisonPage(schools,images){
+  const rows=[
+    ['Location',s=>s.location?`${escape(s.location.city)}, ${escape(s.location.state)}`:'Not Reported'],
+    ...rankings.map(r=>[r.directoryTitle,s=>{const v=result(s,r.key);return ranked(v)?`${rankLabel(v)}${tie(v)} · ${score(v.score)} / 100<br>Score Confidence: ${percent(v.coverage)}`:`NR${v.reason?'<br>'+escape(v.reason):''}`;}]),
+    ...Object.entries(categoryTitles).map(([key,label])=>[label,s=>{const c=s.overall.categories[key];return `${numeric(c.rank)?'#'+c.rank:'NR'} · ${score(c.score)} / 100`;}]),
+    ...['acceptance','sat','gpa'].map(key=>[key==='acceptance'?'Acceptance rate':key==='sat'?'SAT':'High-school GPA',s=>{const f=admissions(s).find(f=>f.key===key);return `${escape(f.value)}<br><small>${escape(f.note)}</small>`;}])
+  ];
+  return layout('School Comparison Tool',`<div class="container comparison-page"><h1>School Comparison Tool</h1><form id="comparison-controls"><fieldset><legend>Choose schools to compare</legend><div class="search-picker"><label class="search-label" for="school-search">Search schools</label><input id="school-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="school-options" placeholder="Search by school name or location" aria-describedby="comparison-help" autocomplete="off"><div id="school-search-dropdown" class="search-dropdown" hidden><div id="school-options" role="listbox" aria-label="School search results">${schools.map(s=>`<button type="button" role="option" aria-selected="false" id="school-option-${s.id}" data-school-id="${s.id}" data-name="${escape(s.officialName)}" data-search="${escape(`${s.name} ${s.officialName} ${s.location?.city??''} ${s.location?.state??''}`)}">${escape(s.officialName)}</button>`).join('')}</div><p id="school-search-empty" hidden>No schools found. Try another name or location.</p></div></div><p id="comparison-help" class="quiet">Search and select up to three schools.</p><div id="comparison-selected" aria-label="Selected schools"></div></fieldset></form><p id="comparison-status" role="status">Comparing ${Math.min(schools.length,3)}/3 schools.</p><div class="table-wrap" role="region" aria-label="School comparison table" tabindex="0"><table id="comparison-table"><caption>Published ranks and scores. Score Confidence means source coverage, not statistical certainty. Admissions measures can use different cohorts; consult each profile's sources.</caption><thead><tr><th scope="col">Measure</th>${schools.map((s,index)=>`<th scope="col" data-school-col="${s.id}"${index>=3?' hidden':''}><a href="${schoolUrl(s,images)}">${escape(s.officialName)}</a></th>`).join('')}</tr></thead><tbody>${rows.map(([label,value])=>`<tr><th scope="row">${label}</th>${schools.map((s,index)=>`<td data-school-col="${s.id}"${index>=3?' hidden':''}>${value(s)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><noscript><p>JavaScript is needed to search and change the selection. Up to three profiles are shown above.</p></noscript></div><script type="module" src="/assets/compare.mjs"></script>`);
+}
+
+export function methodologyPage(method,images,schools,counts){
+  const rule=label=>method.overall.rules.find(r=>r.label===label);
+  const showRule=label=>{const r=rule(label);return r?`<details class="source-detail"><summary>${escape(r.label)}</summary><p>${escape(r.rule)}</p><p class="quiet">${escape(r.notes)}</p></details>`:'';};
+  return layout('Methodology',`<div class="container methodology-body"><h1 class="visually-hidden">Methodology</h1>
+<section id="gus" class="detail-section"><h2>Overall Ranking Methodology</h2><div class="method-category-grid">${method.categories.map(c=>`<article><strong>${c.weight*100}%</strong><h3>${escape(c.name)}</h3><ul>${c.components.map(v=>`<li>${escape(v.name)} <span>${v.weight*100}% of category</span></li>`).join('')}</ul></article>`).join('')}</div><h3>Acceptance Rate Policy</h3><p>${escape(rule('Acceptance score').notes)}</p><p>Within Prestige: 40% U.S. News history, 30% acceptance score and 30% yield score. SAT and high-school GPA never affect scores. Missing admissions metadata displays as Not Reported on this website without altering the exported evidence state.</p>${['Acceptance score','Yield score','Historical weighting','Scope and history','Category completeness','Experience first priority','Experience second priority','Experience third priority','Learning first priority','Learning fallback','Fixed earnings curve','PayScale earnings','College Scorecard','Published 0-100 values','Ties','Coverage','Regional uncertainty'].map(showRule).join('')}<p class="quiet">Regional standing is an experimental frozen estimate. Its documented validation limitations remain visible; it is not a published National University rank.</p></section>
+${rankings.slice(1).map(d=>{const spec=method.specialties[d.key];return `<section id="${d.key}" class="detail-section"><h2>${d.name} Ranking Methodology</h2><p>${escape(d.key==='stem'?'A school must have an engineering and CS rank either through the primary or fallback source to be ranked.':spec.eligibilityNote)}</p><ul class="method-components">${spec.components.map(c=>`<li><span>${escape(c.name)}${c.fallbackSourceKey?`<small>Approved backup: Niche ${escape(c.key==='computerScience'?'Computer Science':c.key==='biology'?'Biology':c.key)}</small>`:'<small>No fallback</small>'}</span><strong>${c.weight*100}%</strong></li>`).join('')}</ul>${d.key==='stem'?`<p>Engineering and CS are required through primary or approved fallback. Renormalize across available components, then subtract ${method.scienceDeduction} points for each of Chemistry, Mathematics, Physics or Biology missing from both sources, up to 8 points. A valid fallback provides full component coverage.</p><p class="quiet">The accepted limitation: a sufficiently weak observed science score can produce a lower result than complete absence. This is a modest breadth deduction, not a no-credit fixed denominator.</p>`:d.key==='medical'?'<p>Both MD and DO schools qualify. Use the defensible main campus; where multiple usable ranks genuinely map to that campus or indivisible institution, average the published ranks, then transform the average. Preserve every observation. Unranked entries do not enter the mean.</p>':d.key==='law'?'<p>Princeton Review Career ratings have no active scoring role. LawHub employment fields are contextual only and never affect the score.</p>':'<p>Owned qualifying business unit and a usable U.S. News full-time MBA rank are required. Undergraduate business and Niche Business are not scoring inputs.</p>'}</section>`;}).join('')}
+<section class="detail-section"><h2>Ranks, scores, and source conventions</h2><p>ARGUS ranks and publisher ranks are different. Single-source specialties preserve a publisher ordering through a fixed score conversion; ARGUS tie groups can combine nearby scores. Numerical rank bands use their arithmetic midpoint. Legitimate zero scores are covered; missing values are not zero.</p><p>Specialty rank scores use the fixed anchors below, interpolated linearly and clamped to zero after #2000. Overall U.S. News standing uses its separate steeper curve, not this specialty scale.</p><div class="table-wrap"><table aria-label="Publisher rank to ARGUS component score"><thead><tr><th>Publisher rank</th><th>ARGUS component score</th></tr></thead><tbody>${method.specialtyRankAnchors.map(([rank,value])=>`<tr><td>#${rank}</td><td>${value}</td></tr>`).join('')}</tbody></table></div><p>Ties use unrounded scores and a group-leader spread no greater than 0.50 points. Competition ranks can skip numbers. Category ranks use the full ARGUS universe.</p><p>Professional specialties require eligible owned units and their designated publisher data. NR means requirements are unmet or data unsupported, not a zero-quality judgment. HASS is not actively ranked.</p></section>
+<section class="detail-section"><h2>Provenance & limitations</h2><p>Master: <code>${escape(method.master.file)}</code></p><p>Verified export: schema ${method.schemaVersion}, ${counts.schools} institutions. Full source editions and selected fallback labels are shown on university pages. Publisher snapshots can be dated differently; this is not a real-time admissions feed.</p><p class="quiet">The source workbook hash and exact dataset hashes are retained in the local handoff report. Normal website builds read JSON only. The underlying rankings are not changed by this website.</p></section><section id="photography" class="detail-section"><h2>Photo Credits</h2><ul class="source-list">${schools.filter(s=>images[s.id]).map(s=>`<li>${escape(s.officialName)}: ${photoCredit(images[s.id],true)}${images[s.id].changes?`<p class="quiet">${escape(images[s.id].changes)}</p>`:''}</li>`).join('')}</ul></section></div>`,true);
+}
