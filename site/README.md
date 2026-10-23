@@ -9,3 +9,5 @@ With the authorized private inputs restored locally, run `node site/build.mjs`, 
 `site/images.json` contains publication-safe source, author, license, checksum and modification records. Each photograph retains its own license, distinct from the repository code license. `site/locations.json` contains independently arranged location facts and source citations.
 
 Complete data-dependent tests run in the private working project. Do not copy private archives, raw observations or their test fixtures into this repository. The manually dispatched Pages workflow accepts only an explicitly approved publication commit and matching release-manifest checksum. It does not build from private data or automatically deploy a source push.
+
+For a public release set `ARGUS_PUBLICATION_PROFILE=minimal`. Default `full` is for local review. The minimal view excludes publisher input tables and raw observations, with source-reviewed data access requests instead of a downloadable dataset. `node site/test-minimal.mjs` needs the private inputs and validates this profile; it is not a portable data reproduction test. See [data access](../docs/DATA_ACCESS.md).

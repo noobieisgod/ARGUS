@@ -87,3 +87,7 @@ Source editions are retained in the private evidence records and reviewed public
 The existing MIT LICENSE applies to ARGUS-authored code and documentation, not third-party photographs or publisher data. See [third-party notices](THIRD_PARTY_NOTICES.md) and the [publication process](docs/PUBLICATION.md). Photo licenses and required credits remain attached to each approved image; share-alike conditions apply to relevant photo adaptations.
 
 No publisher or university endorsement is implied. Do not publish unresolved material merely to meet a target date.
+
+## Reduced public view and data requests
+
+The public release uses `ARGUS_PUBLICATION_PROFILE=minimal`: ARGUS results, institutional CDS facts, locations and citations, without publisher input tables, raw ratings or original JSON downloads. The three supplied acceptance rates above remain unverified privately; their public admissions values are withheld rather than labeled Not Reported. Calculations and rankings are unchanged. [Underlying data requests](docs/DATA_ACCESS.md) are reviewed individually and fulfilled only where redistribution is permitted; otherwise source/access instructions are provided. Request-only access is not a license. Derived-result rights remain a launch gate, especially where a specialty closely follows a single publisher ordering.
