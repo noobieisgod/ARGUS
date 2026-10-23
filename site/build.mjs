@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {basePath as normalizeBasePath,publicationHtml} from './paths.mjs';
+import {minimalSchool} from './publication.mjs';
 import {homePage,rankingPage,schoolPage,methodologyPage,comparisonPage,rankings,schoolUrl,numeric} from './templates.mjs';
 
 export const root=path.dirname(fileURLToPath(import.meta.url));
@@ -44,12 +45,15 @@ export async function loadData(){
   return {...data,images,schools,allSchools:all,counts:handoff.counts,handoff,config};
 }
 
-export async function build({basePath='',output=path.join(root,'dist'),compact=false}={}){
+export async function build({basePath='',output=path.join(root,'dist'),compact=false,minimal=false}={}){
+  assert.equal(typeof minimal,'boolean','Invalid minimal-publication mode');
   basePath=normalizeBasePath(basePath);
   output=path.resolve(output);
   assert.ok(output!==root&&output!==path.dirname(root),'Output must be a dedicated build directory');
-  const data=await loadData(),{schools,images,counts,methodology,sources,handoff}=data;
-  const pages=new Map([['/',homePage(schools,images,counts,data.allSchools)],['/methodology/',methodologyPage(methodology,images,schools,counts)],['/compare/',comparisonPage(schools,images)]]);
+  const data=await loadData();
+  if(minimal){data.schools=data.schools.map(minimalSchool);data.allSchools=data.schools;}
+  const {schools,images,counts,methodology,sources,handoff}=data;
+  const pages=new Map([['/',homePage(schools,images,counts,data.allSchools)],['/methodology/',methodologyPage(methodology,images,schools,counts,minimal)],['/compare/',comparisonPage(schools,images)]]);
   for(const r of rankings)pages.set(`/rankings/${r.key}/`,rankingPage(r.key,schools,images,counts));
   for(const s of schools)pages.set(schoolUrl(s,images),schoolPage(s,images,sources.sources,methodology));
   for(const [url,html]of pages)pages.set(url,publicationHtml(html,basePath,compact));
@@ -57,8 +61,11 @@ export async function build({basePath='',output=path.join(root,'dist'),compact=f
   await fs.mkdir(path.join(output,'assets'),{recursive:true});
   for(const file of ['styles.css','favicon.svg','sort.mjs','compare.mjs','site.mjs','location-filter.mjs'])await fs.copyFile(path.join(root,'assets',file),path.join(output,'assets',file));
   for(const s of schools)if(images[s.id])await fs.copyFile(path.join(root,'..','images',images[s.id].file),path.join(output,'assets',s.id+'.jpg'));
-  await fs.writeFile(path.join(output,'provenance.json'),JSON.stringify({schemaVersion:handoff.schemaVersion,master:handoff.master,dataSha256:handoff.dataSha256,maximumOverallRank:data.config.maximumOverallRank,includedSchoolIds:schools.map(s=>s.id),previewSchoolIds:schools.map(s=>s.id),counts},null,2)+'\n');
+  await fs.writeFile(path.join(output,'provenance.json'),JSON.stringify(minimal?{schemaVersion:handoff.schemaVersion,schools:schools.length,pages:pages.size,publicationProfile:'minimal'}:{schemaVersion:handoff.schemaVersion,master:handoff.master,dataSha256:handoff.dataSha256,maximumOverallRank:data.config.maximumOverallRank,includedSchoolIds:schools.map(s=>s.id),previewSchoolIds:schools.map(s=>s.id),counts},null,2)+'\n');
   console.log(`Built ${pages.size} pages from verified schema v${handoff.schemaVersion} JSON. No workbook access.`);
   return {pages,data,output};
 }
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await build({basePath:process.env.ARGUS_BASE_PATH??'',output:process.env.ARGUS_OUTPUT_DIRECTORY??path.join(root,'dist'),compact:process.env.ARGUS_COMPACT_HTML==='1'});
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  assert.ok(['full','minimal'].includes(process.env.ARGUS_PUBLICATION_PROFILE??'full'),'Unknown publication profile');
+  await build({basePath:process.env.ARGUS_BASE_PATH??'',output:process.env.ARGUS_OUTPUT_DIRECTORY??path.join(root,'dist'),compact:process.env.ARGUS_COMPACT_HTML==='1',minimal:process.env.ARGUS_PUBLICATION_PROFILE==='minimal'});
+}
