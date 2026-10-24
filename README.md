@@ -6,9 +6,9 @@ ARGUS combines published institution-level inputs into its own Overall and speci
 
 ## Publication status
 
-Website publication is being prepared. GitHub Pages is not yet enabled. The local website covers **237 institutions**, with **224 Overall-ranked** and **13 Overall NR** institutions, across **245 pages**. No public launch is claimed until rights and release checks pass.
+[Visit the ARGUS website](https://noobieisgod.github.io/argus-university-rankings/). The published website covers **237 institutions**, with **224 Overall-ranked** and **13 Overall NR** institutions, across **245 pages**.
 
-Raw publisher inputs, the four finalized website JSON files, master/condensed workbooks, research downloads and credentials remain local. This repository will contain reviewed website source and eligible assets. A separately reviewed static release may be published from `gh-pages`; it must not expose excluded inputs. Full data-dependent reproduction requires the private inputs and is not available from a public clone alone.
+Raw publisher inputs, the four finalized website JSON files, master/condensed workbooks, research downloads and credentials remain local. This repository contains website source and licensed campus photographs. The static release is published from `gh-pages` without excluded inputs. Full data-dependent reproduction requires the private inputs and is not available from a public clone alone.
 
 See the [website source instructions](site/README.md) for public checks and private build prerequisites. The [external WSJ research citation](THIRD_PARTY_NOTICES.md#external-source-reference) is a link only; no Scribd document is redistributed here.
 
@@ -90,4 +90,4 @@ No publisher or university endorsement is implied. Do not publish unresolved mat
 
 ## Reduced public view and data requests
 
-The public release uses `ARGUS_PUBLICATION_PROFILE=minimal`: ARGUS results, institutional CDS facts, locations and citations, without publisher input tables, raw ratings or original JSON downloads. The three supplied acceptance rates above remain unverified privately; their public admissions values are withheld rather than labeled Not Reported. Calculations and rankings are unchanged. [Underlying data requests](docs/DATA_ACCESS.md) are reviewed individually and fulfilled only where redistribution is permitted; otherwise source/access instructions are provided. Request-only access is not a license. Derived-result rights remain a launch gate, especially where a specialty closely follows a single publisher ordering.
+The public release uses `ARGUS_PUBLICATION_PROFILE=minimal`: ARGUS results, institutional CDS facts, locations and citations, without publisher input tables, raw ratings or original JSON downloads. The three supplied acceptance rates above remain unverified privately; their public admissions values are withheld rather than labeled Not Reported. Calculations and rankings are unchanged. [Underlying data requests](docs/DATA_ACCESS.md) are reviewed individually and fulfilled only where redistribution is permitted; otherwise source/access instructions are provided. Request-only access is not a license. Third-party rights are distinct from the repository's code license.
